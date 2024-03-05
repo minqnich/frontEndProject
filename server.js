@@ -88,13 +88,16 @@ app.post('/login', (req, res) => {
         }
 
         if (results.length === 0) {
-            // ถ้าไม่พบผู้ใช้ในฐานข้อมูล ให้แสดงข้อความผิดพลาด
-              
             return res.status(401).sendFile(path.join(__dirname, 'public', 'login.html'));
         }
 
-        // ถ้าล็อกอินสำเร็จ ก็ทำการ redirect ไปยังหน้า home.html
-        res.redirect('/home.html');
+        // Check if the user is admin
+        const user = results[0];
+        if (user.email === 'admin' && user.password === 'admin') {
+            res.redirect('/admin.html'); // Redirect to the admin dashboard
+        } else {
+            res.redirect('/home.html'); // Redirect to the user profile page
+        }
     });
 });
 
