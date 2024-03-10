@@ -94,12 +94,68 @@ app.post('/login', (req, res) => {
         // Check if the user is admin
         const user = results[0];
         if (user.email === 'admin' && user.password === 'admin') {
-            res.redirect('/admin.html'); // Redirect to the admin dashboard
+            res.redirect('/categoryManage.html'); // Redirect to the admin dashboard
         } else {
             res.redirect('/home.html'); // Redirect to the user profile page
         }
     });
 });
+
+// add category section
+app.get('/api/categories', (req, res) => {
+    const sql = 'SELECT * FROM categories';
+    connection.query(sql, (err, results) => {
+        if (err) {
+            console.error('Error executing SQL query:', err);
+            return res.status(500).send('Error executing SQL query: ' + err.message);
+        }
+        const categories = results.map(result => {
+            return { id: result.id, category_name: result.category_name };
+        });
+        res.json(categories); // ส่งข้อมูลหมวดหมู่กลับไปยังหน้าเว็บไซต์ Category Management ในรูปแบบ JSON
+    });
+});
+
+app.post('/api/addCategory', (req, res) => {
+    const { category_name } = req.body;
+  
+    // เพิ่มหมวดหมู่ลงในฐานข้อมูล
+    const sql = 'INSERT INTO categories (category_name) VALUES (?)';
+    connection.query(sql, [category_name], (err, result) => {
+      if (err) {
+        console.error('Error executing SQL query:', err);
+        return res.status(500).send('Error executing SQL query: ' + err.message);
+      }
+      console.log('Category added successfully:', result);
+      res.sendStatus(200); // ส่งกลับสถานะ 200 OK เมื่อเพิ่มหมวดหมู่สำเร็จ
+    });
+});
+
+app.delete('/api/deleteCategory/:categoryId', (req, res) => {
+    const categoryId = req.params.categoryId;
+    console.log('Received DELETE request for category with ID:', categoryId); // เพิ่ม console log เพื่อตรวจสอบ categoryId ที่ถูกส่งไปยังเซิร์ฟเวอร์
+
+    // ตรวจสอบว่า categoryId ถูกส่งมาหรือไม่
+    if (!categoryId) {
+        console.error('Category ID is missing.'); // บันทึกข้อผิดพลาดในกรณีที่ไม่มี categoryId ที่ส่งมา
+        return res.status(400).send('Category ID is missing.'); // ส่ง response กลับไปยัง client ว่ามีข้อผิดพลาดเกี่ยวกับ categoryId
+    }
+
+    // Execute SQL query to delete category
+    const sql = 'DELETE FROM categories WHERE category_id = ?';
+    connection.query(sql, [categoryId], (err, result) => {
+        if (err) {
+            console.error('Error executing SQL query:', err);
+            return res.status(500).send('Error deleting category');
+        }
+        console.log('Category deleted successfully:', result); // เพิ่ม console log เมื่อการลบสำเร็จ
+        res.sendStatus(200); // Send status 200 OK when deletion is successful
+    });
+});
+
+
+
+
 
 
 
