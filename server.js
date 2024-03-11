@@ -132,13 +132,22 @@ app.post('/api/addCategory', (req, res) => {
 });
 
 app.delete('/api/deleteCategory/:categoryId', (req, res) => {
-    const categoryId = req.params.categoryId;
-    console.log('Received DELETE request for category with ID:', categoryId); // เพิ่ม console log เพื่อตรวจสอบ categoryId ที่ถูกส่งไปยังเซิร์ฟเวอร์
+    let categoryId = req.params.categoryId;
+    console.log('Received DELETE request for category with ID:', categoryId); 
 
-    // ตรวจสอบว่า categoryId ถูกส่งมาหรือไม่
-    if (!categoryId) {
-        console.error('Category ID is missing.'); // บันทึกข้อผิดพลาดในกรณีที่ไม่มี categoryId ที่ส่งมา
-        return res.status(400).send('Category ID is missing.'); // ส่ง response กลับไปยัง client ว่ามีข้อผิดพลาดเกี่ยวกับ categoryId
+    // ตรวจสอบว่า categoryId มีค่าหรือไม่
+    if (categoryId === undefined || categoryId === null) {
+        console.error('Category ID is missing or invalid.');
+        return res.status(400).send('Category ID is missing or invalid.');
+    }
+
+    // แปลง categoryId เป็นตัวเลข
+    categoryId = parseInt(categoryId);
+
+    // ตรวจสอบว่า categoryId เป็นตัวเลขหรือไม่
+    if (isNaN(categoryId)) {
+        console.error('Category ID is not a number.');
+        return res.status(400).send('Category ID is not a number.');
     }
 
     // Execute SQL query to delete category
@@ -148,15 +157,33 @@ app.delete('/api/deleteCategory/:categoryId', (req, res) => {
             console.error('Error executing SQL query:', err);
             return res.status(500).send('Error deleting category');
         }
-        console.log('Category deleted successfully:', result); // เพิ่ม console log เมื่อการลบสำเร็จ
-        res.sendStatus(200); // Send status 200 OK when deletion is successful
+        console.log('Category deleted successfully:', result);
+        res.sendStatus(200);
     });
 });
 
-
-
-
-
+// Update category
+app.put('/api/updateCategory/:categoryId', (req, res) => {
+    const categoryId = req.params.categoryId;
+    const newName = req.body.category_name;
+  
+    // ตรวจสอบว่ามีข้อมูลที่ถูกส่งมาหรือไม่
+    if (!newName || newName.trim() === '') {
+      return res.status(400).send('Category name cannot be empty');
+    }
+  
+    // อัพเดตหมวดหมู่ในฐานข้อมูล
+    const sql = 'UPDATE categories SET category_name = ? WHERE category_id = ?';
+    connection.query(sql, [newName, categoryId], (err, result) => {
+      if (err) {
+        console.error('Error executing SQL query:', err);
+        return res.status(500).send('Error updating category');
+      }
+      console.log('Category updated successfully:', result);
+      res.sendStatus(200);
+    });
+  });
+  
 
 
 

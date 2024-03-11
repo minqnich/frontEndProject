@@ -87,7 +87,6 @@
   <!-- Category List -->
   <div id="categoryList"></div>
 
-
     <div class="modal fade" id="editCategoryModal" tabindex="-1" aria-labelledby="editCategoryModalLabel" aria-hidden="true">
       <div class="modal-dialog">
         <div class="modal-content">
@@ -102,35 +101,35 @@
                 <input type="text" class="form-control" id="editCategoryName" required>
               </div>
               <input type="hidden" id="editCategoryId">
-            </form>
+            </form>            
           </div>
           <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             <button type="button" class="btn btn-primary" id="saveChangesBtn">Save Changes</button>
-          </div>
+        </div>        
         </div>
       </div>
     </div>
 
     <!-- Bootstrap Modal for Deleting Category -->
-    <div class="modal" tabindex="-1" role="dialog" id="confirmDeleteModal">
-      <div class="modal-dialog" role="document">
+    <div class="modal fade" id="deleteCategoryModal" tabindex="-1" aria-labelledby="deleteCategoryModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title">Confirm Delete</h5>
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-              <span aria-hidden="true">&times;</span>
-            </button>
+            <h5 class="modal-title" id="deleteCategoryModalLabel">Delete Category</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
-            <p>Are you sure you want to delete this item?</p>
+            <p>Are you sure you want to delete this category?</p>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Delete</button>
-            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-          </div>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <input type="text" id="category-id">
+            <button class="btn btn-danger delete-btn" id="delete-btn">Delete</button>
+          </div>          
         </div>
       </div>
-    </div>    
+    </div>
 
   
     <!-- Console Categories 
@@ -211,63 +210,85 @@
       <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 
       <script>
-        function openEditModal(categoryId, categoryName) {
-          document.getElementById('editCategoryId').value = categoryId;
-          document.getElementById('editCategoryName').value = categoryName;
-          const modal = new bootstrap.Modal(document.getElementById('editCategoryModal'));
-          modal.show();
-        }
+// ในฟังก์ชัน openEditModal()
+function openEditModal(categorId, categoryName) {
+  console.log('Opening edit modal for category:', categoryId);
+  console.log('Category ID:', categoryId);
+  console.log('Category Name:', categoryName);
+
+  // เช็คว่า categoryId มีค่าหรือไม่
+  if (!categoryId) {
+    console.error('Invalid category ID:', categoryId);
+    return;
+  }
+
+  // ตั้งค่าให้กับ input ใน modal
+  document.getElementById('editCategoryId').value = categoryId;
+  document.getElementById('editCategoryName').value = categoryName;
+
+  // เรียกใช้โมเดลแก้ไข
+  const modal = new bootstrap.Modal(document.getElementById('editCategoryModal'));
+  modal.show();
+}
+
+
+function saveChangesBtn() {
+  const newName = document.getElementById('editCategoryName').value;
+  const categoryId = document.getElementById('editCategoryId').value;
   
-        
-        // function openDeleteModal(categoryId) {
-        //   $('#deleteCategoryModal').modal('show');
-        //   $('#confirmDeleteBtn').on('click', function() {
-        //     deleteCategory(categoryId);
-        //   });
-        // }
+  // ตรวจสอบว่า categoryId มีค่าที่ถูกต้องหรือไม่
+  if (!categoryId || isNaN(categoryId)) {
+    console.error('Invalid category ID:', categoryId);
+    return;
+  }
+  
+  fetch(`/api/updateCategory/${categoryId}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ category_name: newName })
+  })
+  .then(response => {
+    if (!response.ok) {
+      throw new Error('Failed to update category');
+    }
+    // กระทำเพิ่มเติมหลังจากการอัพเดตหมวดหมู่สำเร็จ
+  })
+  .catch(error => {
+    console.error('Error updating category:', error);
+  });
+}
+
+
+
+      
+        function openDeleteModal(categoryId) {
+          $('#deleteCategoryModal').modal('show');
+          $('#confirmDeleteBtn').on('click', function() {
+            deleteCategory(categoryId);
+          });
+        }
 
     
-        // function addDeleteEventListeners() {
-        //   document.querySelectorAll('.btn-danger').forEach(button => {
-        //     button.addEventListener('click', function() {
-        //       const categoryId = this.dataset.categoryId;
-        //       openDeleteModal(categoryId);
-        //     });
-        //   });
-        // }
+        function addDeleteEventListeners() {
+          document.querySelectorAll('.btn-danger').forEach(button => {
+            button.addEventListener('click', function() {
+              const categoryId = this.dataset.categoryId;
+              openDeleteModal(categoryId);
+            });
+          });
+        }
 
-        // document.getElementById('delete-btn').addEventListener('click', function() {
-        //     const categoryId = document.getElementById('category-id').value; // รับค่า ID จาก input หรือ element อื่น ๆ
-        //     deleteCategory(categoryId); // เรียกใช้ฟังก์ชัน deleteCategory โดยส่ง categoryId ไป
-        // });
+        document.getElementById('delete-btn').addEventListener('click', function() {
+            const categoryId = document.getElementById('category-id').value; // รับค่า ID จาก input หรือ element อื่น ๆ
+            deleteCategory(categoryId); // เรียกใช้ฟังก์ชัน deleteCategory โดยส่ง categoryId ไป
+        });
 
 
-        // function deleteCategory(categoryId) {
-        //   console.log('Attempting to delete category with ID:', categoryId);
-        //   fetch(`/api/deleteCategory/${categoryId}`, {
-        //     method: 'DELETE'
-        // })
-        // .then(response => {
-        //     if (!response.ok) {
-        //         throw new Error('Failed to delete category');
-        //     }
-        //     console.log('Category deleted successfully');
-        //     location.reload(); // รีเฟรชหน้าเว็บหลังจากการลบสำเร็จ
-        // })
-        // .catch(error => {
-        //     console.error('Error deleting category:', error);
-        // });
-        // }
-
-        function openDeleteModal(categoryId) {
-    // เรียกใช้ Modal เพื่อยืนยันการลบ category
-    const confirmDeleteModal = document.getElementById('confirmDeleteModal');
-    const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
-
-    // เมื่อปุ่ม "Delete" ใน modal ถูกคลิก
-    confirmDeleteBtn.addEventListener('click', function() {
-        // ทำการลบ category โดยส่ง categoryId ไปยัง API หรือฟังก์ชันบนเซิร์ฟเวอร์
-        fetch(`/api/deleteCategory/${categoryId}`, {
+        function deleteCategory(categoryId) {
+          console.log('Attempting to delete category with ID:', categoryId);
+          fetch(`/api/deleteCategory/${categoryId}`, {
             method: 'DELETE'
         })
         .then(response => {
@@ -275,74 +296,31 @@
                 throw new Error('Failed to delete category');
             }
             console.log('Category deleted successfully');
-            // หลังจากลบสำเร็จ ปิด modal
-            confirmDeleteModal.style.display = 'none';
-            // รีเฟรชหน้าหลังจากการลบสำเร็จ
-            location.reload();
+            location.reload(); // รีเฟรชหน้าเว็บหลังจากการลบสำเร็จ
         })
         .catch(error => {
             console.error('Error deleting category:', error);
         });
-    });
-
-    // เมื่อ modal ถูกเปิด กำหนดค่าของ categoryId ไปยัง data attribute ของปุ่ม "Delete" ใน modal
-    confirmDeleteModal.addEventListener('show.bs.modal', function() {
-        confirmDeleteBtn.dataset.categoryId = categoryId;
-    });
-
-    // เปิด modal สำหรับยืนยันการลบ
-    $('#confirmDeleteModal').modal('show');
-}
-
-// ส่งคำขอเพิ่มหมวดหมู่และรับไอดีของหมวดหมู่ที่เพิ่มล่าสุด
-function addCategory(categoryName) {
-    fetch('/api/addCategory', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ category_name: categoryName })
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('Failed to add category');
         }
-        // หลังจากเพิ่มสำเร็จ แปลง response เป็น JSON
-        return response.json();
-    })
-    .then(data => {
-        // เมื่อได้รับไอดีของหมวดหมู่ที่เพิ่มสำเร็จแล้ว ให้เรียกใช้งาน openDeleteModal เพื่อเปิด Modal ลบหมวดหมู่
-        openDeleteModal(data.categoryId);
-    })
-    .catch(error => {
-        console.error('Error adding category:', error);
-    });
-}
 
-// เมื่อหน้าเว็บโหลดเสร็จ เรียกใช้งาน addDeleteEventListeners เพื่อเพิ่ม event listeners ให้กับปุ่ม "Delete"
-document.addEventListener('DOMContentLoaded', addDeleteEventListeners);
-
-function addDeleteEventListeners() {
-    document.querySelectorAll('.btn-danger').forEach(button => {
-        button.addEventListener('click', function() {
-            const categoryId = this.dataset.categoryId;
-            openDeleteModal(categoryId);
-        });
-    });
-}
 
         document.addEventListener("DOMContentLoaded", function () {
           // Fetch categories from API endpoint
           fetch('/api/categories')
-            .then(response => response.json())
-            .then(categories => {
+  .then(response => {
+    if (!response.ok) {
+      throw new Error('Failed to fetch categories');
+    }
+    return response.json();
+  })
+  .then(categories => {
               const categoryList = document.getElementById('categoryList');
               categories.forEach(category => {
                 const categoryContainer = document.createElement('div');
                 categoryContainer.classList.add('product-container');
                 categoryContainer.innerHTML = `
                   <h2 class="headline-product fw-bolder">${category.category_name}</h2>
-                  <button class="btn btn-secondary" data-category-id="${category.id}" data-category-name="${category.category_name}">Edit</button>
+                  <button class="btn btn-secondary edit-btn" data-category-id="${category.id}" data-category-name="${category.category_name}">Edit</button>
                   <button class="btn btn-danger" data-category-id="${category.id}">Delete</button>
                 `;
                 categoryList.appendChild(categoryContainer);
@@ -350,8 +328,19 @@ function addDeleteEventListeners() {
       
               // Add event listeners to delete buttons after creating them
               addDeleteEventListeners();
-            })
-            .catch(error => console.error('Error loading categories:', error));
+
+      // Add event listeners to edit buttons after creating them
+      document.querySelectorAll('.edit-btn').forEach(button => {
+        button.addEventListener('click', function() {
+          const categoryId = this.dataset.categoryId;
+          const categoryName = this.dataset.categoryName;
+          openEditModal(categoryId, categoryName);
+        });
+      });
+      document.getElementById('saveChangesBtn').addEventListener('click', saveChangesBtn);
+    })
+    .catch(error => console.error('Error loading categories:', error)); // Add catch for error handling
+});
       
           // Handle "Add Category" button click event
           document.getElementById('addCategoryBtn').addEventListener('click', function() {
@@ -375,8 +364,11 @@ function addDeleteEventListeners() {
               console.error('Error adding category:', error);
             });
           });
-        });
       </script>
       
+  </body>
+</html>
+
+    </script>
   </body>
 </html>
