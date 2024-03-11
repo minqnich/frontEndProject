@@ -131,40 +131,30 @@ app.post('/api/addCategory', (req, res) => {
     });
 });
 
-app.delete('/api/deleteCategory/:categoryId', (req, res) => {
-    let categoryId = req.params.categoryId;
-    console.log('Received DELETE request for category with ID:', categoryId); 
-
-    // ตรวจสอบว่า categoryId มีค่าหรือไม่
-    if (categoryId === undefined || categoryId === null) {
-        console.error('Category ID is missing or invalid.');
-        return res.status(400).send('Category ID is missing or invalid.');
+app.delete('/api/deleteCategory/:id', (req, res) => {
+    const categoryId = req.params.id;
+    // Validate categoryId before using it in the query
+    if (!categoryId) {
+        console.error('Invalid category ID:', categoryId);
+        res.status(400).send('Invalid category ID');
+        return;
     }
-
-    // แปลง categoryId เป็นตัวเลข
-    categoryId = parseInt(categoryId);
-
-    // ตรวจสอบว่า categoryId เป็นตัวเลขหรือไม่
-    if (isNaN(categoryId)) {
-        console.error('Category ID is not a number.');
-        return res.status(400).send('Category ID is not a number.');
-    }
-
-    // Execute SQL query to delete category
-    const sql = 'DELETE FROM categories WHERE category_id = ?';
-    connection.query(sql, [categoryId], (err, result) => {
-        if (err) {
-            console.error('Error executing SQL query:', err);
-            return res.status(500).send('Error deleting category');
+    connection.query('DELETE FROM categories WHERE id = ?', categoryId, (error, results) => {
+        if (error) {
+            console.error('Error deleting category:', error);
+            res.status(500).send('Failed to delete category');
+            return;
         }
-        console.log('Category deleted successfully:', result);
+        console.log('Category deleted successfully');
         res.sendStatus(200);
     });
 });
 
+
+  
 // Update category
-app.put('/api/updateCategory/:categoryId', (req, res) => {
-    const categoryId = req.params.categoryId;
+app.put('/api/updateCategory/:id', (req, res) => {
+    const id = req.params.id;
     const newName = req.body.category_name;
   
     // ตรวจสอบว่ามีข้อมูลที่ถูกส่งมาหรือไม่
@@ -173,8 +163,8 @@ app.put('/api/updateCategory/:categoryId', (req, res) => {
     }
   
     // อัพเดตหมวดหมู่ในฐานข้อมูล
-    const sql = 'UPDATE categories SET category_name = ? WHERE category_id = ?';
-    connection.query(sql, [newName, categoryId], (err, result) => {
+    const sql = 'UPDATE categories SET category_name = ? WHERE id = ?';
+    connection.query(sql, [newName, id], (err, result) => {
       if (err) {
         console.error('Error executing SQL query:', err);
         return res.status(500).send('Error updating category');
@@ -182,7 +172,8 @@ app.put('/api/updateCategory/:categoryId', (req, res) => {
       console.log('Category updated successfully:', result);
       res.sendStatus(200);
     });
-  });
+});
+
   
 
 
